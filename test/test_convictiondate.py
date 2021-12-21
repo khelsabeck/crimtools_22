@@ -6,8 +6,7 @@ import uuid
 from src.charge import Charge
 from src.crime import Crime
 from src.convictiondate import ConvictionDate
-################################################################################
-########################################################################
+
 def test_initialization():
     '''This tests an initialization.'''
     dt = date(2001,1,1)
