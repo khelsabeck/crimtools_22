@@ -8,8 +8,8 @@ inner lists holding crimes of the same class in order.
 '''
 import typing
 import uuid
-from charge import Charge
-from crime import Crime
+from .charge import Charge
+from .crime import Crime
 import datetime
 
 class ConvictionDate:
@@ -63,18 +63,17 @@ class ConvictionDate:
         ________________________________________________________________
         :param charge: a charge to add to self.convictions
         '''
-        message = "convictiondate.add() requires a Charge \
-instance as a parameter with a valid disposition_date of type: \
-datetime.date. Also, the dates must all match."
-        try:
-            if type(charge) != Charge or \
-                type(charge.disposition_date) != datetime.date or \
-                charge.crimeclass not in Crime.valid_classes or \
-                charge.disposition_date != self.disposition_date:
-                raise ValueError(message)
-            for count, crimeclass in Crime.valid_classes:
-                if crimeclass == charge.crimeclass:
-                    self.convictions[count].append(charge)
-                    break
-        except:
-            raise ValueError(message)
+        if  type(charge) != Charge \
+            or type(charge.disposition_date) != datetime.date\
+            or charge.convicted == False\
+            or type(charge.crime) != Crime\
+            or charge.crime.crimeclass not in Crime.valid_classes\
+            or charge.disposition_date != self.disposition_date:
+            raise ValueError("add() needs Charge with right date.")
+        count = 0
+        for crimeclass in Crime.valid_classes:
+            if crimeclass == charge.crime.crimeclass:
+                self.convictions[count].append(charge)
+                break
+            else:
+                count += 1

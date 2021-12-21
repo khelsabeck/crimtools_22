@@ -159,10 +159,10 @@ class Charges_Convicted(Charge_Collection):
         one for each unique date. It populates these with the matching 
         convictions.'''
         self.datemaker()    # now self.unique_dates has uniques
-        self.convictions = [ 
+        self.cons_bydate = [ 
             ConvictionDate(date) for date in self.unique_dates 
         ]
         for charge in self.charges:
             for idx, dt in self.unique_dates:
                 if charge.disposition_date == dt:
-                    self.convictions[idx].add(charge)
+                    self.cons_bydate[idx].add(charge)
