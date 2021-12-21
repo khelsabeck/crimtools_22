@@ -8,7 +8,7 @@ setup (
     version='0.0.1',
     description='Tools for running NC criminal records (for attys).',
     py_modules=[ 
-        "defendant", "crime", "charge", "convictiondate",
+        "defendant", "crime", "charge", "convictiondate", "collections",
     ],
     package_dir={'':'src'}, 
     long_description=long_description,
