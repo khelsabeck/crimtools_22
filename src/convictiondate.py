@@ -25,6 +25,7 @@ class ConvictionDate:
     METHODS:
     ____________________________________________________________________
     :method add: adds a charge in sorted order
+    :method highest: returns the highest-level (list of) charges
     '''
 
     def __init__(self, date: object):
@@ -77,3 +78,20 @@ class ConvictionDate:
                 break
             else:
                 count += 1
+
+    def highest(self) -> list:
+        '''returns a list of the highest-level charges.
+
+        This validates the input's type, and that it has a conviction 
+        date & adds the charge to the appropriate inner list (the one 
+        corresponding to the crime's class).
+
+        RETURNS:
+        ________________________________________________________________
+        :returns: Highest charge in this data structure
+        :rtype: list (of Charges)
+        '''
+        reversed = copy(self.convictions).reverse()
+        for conlist in reversed:
+            if conlist != []:
+                return conlist 

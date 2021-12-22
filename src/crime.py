@@ -63,6 +63,8 @@ class Crime:
         ______________________________________________________________
         :param s: a string to validate as a crime class (NC) 
 
+        RETURN:
+        ______________________________________________________________
         :returns: True for valid, else False
         :rtype: bool
         '''
@@ -70,7 +72,7 @@ class Crime:
             return True
         return False
 
-    def set_crimeclass( self, s:str ) -> bool:
+    def set_crimeclass(self, s:str) -> bool:
         '''
         validates data and sets if valid. Returns T if set, else F
 
@@ -81,7 +83,7 @@ class Crime:
         :returns: True if set, else False
         :rtype: bool
         '''
-        if ( self.crimeclass_isvalid( s ) ):
+        if (self.crimeclass_isvalid(s)):
             self.crimeclass = s
             return True
         else:
@@ -102,7 +104,7 @@ class Crime:
             return True
         return False
 
-    def set_statute( self, s:str ):
+    def set_statute(self, s:str):
         '''
         validates data and sets if valid, or raises ValueError w msg
 
@@ -110,7 +112,7 @@ class Crime:
         ______________________________________________________________
         :param s: a string to set as the statute
         '''
-        if ( self.crimestring_isvalid( s ) ):
+        if (self.crimestring_isvalid(s)):
             self.statute = s
             return True
         else:
@@ -145,7 +147,7 @@ class Crime:
             return True
         return False
 
-    def set_id( self, id : int ):
+    def set_id(self, id: int):
         '''
         This validates the input and sets if valid, else ValueError
 
@@ -153,7 +155,7 @@ class Crime:
         ________________________________________________________________
         :param id: an input to set as an id (int type) 
         '''
-        if ( self.id_isvalid(id) ):
+        if (self.id_isvalid(id)):
             self.id = id
         else:
             raise ValueError("An id must be a valid int.")
@@ -174,7 +176,7 @@ class Crime:
             return True
         return False
 
-    def set_uid( self, uid : object ):
+    def set_uid( self, uid: object ):
         '''
         This validates the input and sets if valid, else ValueError
 
