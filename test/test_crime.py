@@ -1,3 +1,10 @@
+'''
+file:   test_crime.py
+author: Keith Helsabeck
+
+This is the file for testing crime (using pytest).
+Run tests with: "pytest --cov=src --cov-report term-missing"
+'''
 import pytest
 from datetime import date, datetime, timedelta
 import typing

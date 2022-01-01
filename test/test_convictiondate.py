@@ -1,3 +1,10 @@
+'''
+file:   test_convictiondate.py
+author: Keith Helsabeck
+
+This is the file for testing convictiondate (using pytest).
+Run tests with: "pytest --cov=src --cov-report term-missing"
+'''
 import pytest
 from datetime import date, datetime, timedelta
 import typing
@@ -8,11 +15,14 @@ from src.crime import Crime
 from src.convictiondate import ConvictionDate
 
 def test_initialization():
-    '''This tests an initialization.'''
+    '''This tests an initialization.
+    '''
     dt = date(2001,1,1)
     convictiondate = ConvictionDate(dt)
-    assert [ [], [], [], [], [], [], [], [], [], [], [], [], [], [], []] \
-        == convictiondate.convictions
+    expected = [ 
+        [], [], [], [], [], [], [], [], [], [], [], [], [], [], [] 
+    ]
+    assert expected == convictiondate.convictions
 
 def test_adder():
     '''This tests the add method'''
@@ -83,4 +93,27 @@ def test_validators():
         charge.disposition_date = date(2011,2,2)
         convictiondate.add(charge)
     exception_raised = exc_info.value
-    assert ValueError == type(exception_raised)    
+    assert ValueError == type(exception_raised)
+
+def test_highest():
+    '''This tests the highest method, which returns
+    a list of all the convictions of the highest class'''
+    dt = date(2001,1,1)
+    convictiondate = ConvictionDate(dt)
+    crime = Crime()
+    crime.crimeclass = "Class A Felony"
+    charge = Charge()
+    charge.set_dispositiondate(dt)
+    charge.set_crime(crime)
+    charge.convicted = True
+    convictiondate.add(charge)
+    dt = date(2001,1,1)
+    crime2 = Crime()
+    crime2.crimeclass = "Class 2 Misdemeanor"
+    charge2 = Charge()
+    charge2.set_dispositiondate(dt)
+    charge2.set_crime(crime2)
+    charge2.convicted = True
+    convictiondate.add(charge2)
+    assert charge.crime.crimeclass == \
+        convictiondate.highest()[0].crime.crimeclass

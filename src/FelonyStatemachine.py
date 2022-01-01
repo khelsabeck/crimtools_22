@@ -35,20 +35,29 @@ Points:         Level:
 
 import typing
 from .collections import Charge_Collection
+from .charge import Charge
+from .crime import Crime
 
 class FelonyPointChart:
     '''Has a dict of crimes that qualify for felony record points.
     
     CLASS ATTRIBUTES:
     ____________________________________________________________________
-    :class_attr crimes: list of crime classes that are eligible for pts
-    :class_attr pointvals: dict of eligible classes & their point vals
+    :class_attr crimes: list of crime classes eligible for F pts
+    :class_attr pointvals: dict of eligible classes & F point values
     '''
     crimes = [  
-                "Class 1 Misdemeanor", "Class A1 Misdemeanor", 
-                "Class I Felony", "Class H Felony", "Class G Felony", 
-                "Class F Felony", "Class E Felony", "Class D Felony", 
-                "Class C Felony", "Class B1 Felony", "Class B2 Felony", 
+                "Class 1 Misdemeanor", 
+                "Class A1 Misdemeanor", 
+                "Class I Felony", 
+                "Class H Felony", 
+                "Class G Felony", 
+                "Class F Felony", 
+                "Class E Felony", 
+                "Class D Felony", 
+                "Class C Felony", 
+                "Class B1 Felony", 
+                "Class B2 Felony", 
                 "Class A Felony" 
     ]
     pointvals = {
@@ -91,7 +100,7 @@ class State:
         self.index = 0
         self.level = 1
 
-    def on_event(self, colx: object, pts: int, index: int): 
+    def on_event(self, colx: object, pts: int, index: int) -> int: 
         '''
         Determines next trans: 1+ convictions->HubState; 0->Finished
 
@@ -100,8 +109,13 @@ class State:
         :param colx: the Charge_Collection Instance
         :param pts: num of felony pts
         :param index: index of convictiondate in colx.cons_bydate
+
+        RETURN:
+        ________________________________________________________________
+        :return: the integer 0
+        :rtype: int
         '''
-        pass 
+        return 0 
 
     def __repr__(self):
         return self.__str__()
@@ -129,9 +143,9 @@ class StartState(State):
     :method repr: returns representation of this state's class name
     :method str: returns representation of this state's class name
     '''
-    def on_event(self, colx: object, pts: int, index: int)->object: 
+    def on_event(self, colx: object, pts: int, index: int) -> object: 
         '''
-        Determines next transition: 1+ convictions->HubState. 0->Finished
+        Determines next transit'n: 1+ convictions->HubState. 0->Finished
 
         PARAMETERS:
         ________________________________________________________________
@@ -145,14 +159,8 @@ class StartState(State):
             return FinishedState().on_event(colx, pts, index)
 
         elif type(colx.cons_bydate) == list \
-            and len(cons_bydate) >= 1: 
+            and len(colx.cons_bydate) >= 1: 
             return HubState().on_event(colx, pts, index)
-
-        else:
-            e = ErrorState()
-            e.error = "There was an exception in the StartState. The \
-parameter values are likely invalid."
-            return e.on_event(colx, pts, index)
 
 class HubState(State):
     '''
@@ -188,10 +196,8 @@ class HubState(State):
             return FinishedState().on_event(colx, pts, index)
 
         con_date = colx.cons_bydate[index]
-        for charge in con_date.convictions:
-            if "Felony" in charge.crime_class:
-                return F_State().on_event(colx, pts, index)
-
+        if "Felony" in con_date.highest()[0].crime.crimeclass:
+            return F_State().on_event(colx, pts, index)
         return M_State().on_event(colx, pts, index) # no felonies
 
 class M_State(State):
@@ -213,12 +219,11 @@ class M_State(State):
     :method repr: returns representation of this state's class name
     :method str: returns representation of this state's class name
     '''
-    def on_event(self, colx:list, pts:int, index: int):
-        convictions = colx.cons_bydate[index].highest()
-        for c in convictions:
-            if self.is_eligible(c):
-                return HubState().on_event(sliced, pts + 1, index + 1)
-        return HubState().on_event(sliced, pts, index + 1)
+    def on_event(self, colx:object, pts:int, index: int):
+        condate = colx.cons_bydate[index]
+        if self.is_eligible(condate.highest()[0]):
+            return HubState().on_event(colx, pts + 1, index + 1)
+        return HubState().on_event(colx, pts, index + 1)
     
     def is_eligible(self, charge: object) -> bool:
         '''
@@ -234,29 +239,25 @@ class M_State(State):
         :returns: True for eligible, else False
         :rtype: bool
         '''
-        if type(charge) == None:
-            return False
-        if type(charge.crime) == Crime \
-            and "A1" or "1" in charge.crime.crimeclass \
-            and "20-" not in charge.crime.crimeclass:
-            return True
-        if type(charge.crime) == Crime \
-            and ("20-141.4(a2)" in charge.crime.statute \
-                or "20-138.1" in charge.crime.statute)\
-                or "20-138.1" in charge.crime.statute:
-            return True
+        crimeclass = charge.crime.crimeclass
+        statlow = charge.crime.statute.lower()
+        if "1" in crimeclass: # A1 and 1 misdemeanors
+            if "14" in statlow: # general criminal §s
+                return True
+            elif "20-141.4(a2)" in statlow \
+                or "20-138" in statlow\
+                or "20-28(a1)" in statlow:
+                return True
         return False
-
 
 class F_State(State):
     '''An eligible misdemeanor (Class 1 or A1) is worth one point. Multiple 
     misdemeanors on the same conviction date are capped at 1 point per day. 
     This state class should add a point to points and return to HubState.'''
-    def on_event(self, colx: list, pts: int, index: int):
-        convictions = colx.cons_bydate[index].highest()
-        pts += FelonyPointChart.pointvals[convictions.crime.crimeclass]
-        index += 1
-        return HubState(colx, pts, index)
+    def on_event(self, colx: object, pts: int, index: int):
+        high_class = colx.cons_bydate[index].highest()[0].crime.crimeclass
+        pts += FelonyPointChart.pointvals[high_class]
+        return HubState().on_event(colx, pts, index + 1)
 
 class FinishedState(State):
     '''This is the end of counting up the felonies'''
@@ -280,34 +281,48 @@ class FinishedState(State):
         elif pts >= 18:
             return 6
 
-class ErrorState(State):
-    '''If there is an error in one of the states, ErrorState is likely 
-    called.'''
-    def on_event(self, convictions:list, points:int):
-        self.level = "An error occured while caluclating the record."
-        self.points = "An error occured while caluclating the record."
-        return self
-
 #--------- The State Machine:-----------------
 class Felony_RecordMachine:
     '''
-    FSM for calculating felony record level.
+    State machine for calculating felony record level.
+
+    USE:
+    ____________________________________________________________________
+    Use this by passing a collection instance for a defendant to the 
+    on_event() method. It will calculate the points and level of your
+    defendant. Once the FSM has run, the properties from this class
+    will return as the points and level.
 
     ATTRIBUTES:
     ____________________________________________________________________
     :attr state: This is the state the FSM is in now
     :attr points: (property) number of points in record
     :attr level: (property) felony record level (1-6)
+
+    METHODS:
+    ____________________________________________________________________
+    :method on_event: takes colx and runs it through FSM to --> pts/lev.
+
     '''
     def __init__(self):
         self.state = StartState() # starting state set
     
-    def on_event(self, colx:object):
+    def on_event(self, colx: object):
+        '''
+        This method takes a Charge_Collection object representing a 
+        Defendant's record and calculates the points and record level. 
+        The data fields for each charge must include a crime with a
+        crimeclass, and the conviction date.
+
+        PARAMETERS:
+        ________________________________________________________________
+        :colx: a Charge_Collection--Charges for D (convictions w crimes)
+        '''
         self.state = self.state.on_event(colx, 0, 0)
 
     @property
     def points(self):
-        return self.state.points
+        return self.state.pts
 
     @property
     def level(self):

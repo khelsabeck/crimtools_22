@@ -10,9 +10,14 @@ __CONTENTS:__ <br />
 --Charge: a model of a criminal charge (count) against D (has crime)<br />
 --ConvictionDate: a date with 1+ charges that have been convicted<br />
 --Charge_Collection: Collection for charges/convictiondates<br />
---Dumbwaiter: context object for FSMs
+--Dumbwaiter: context object for FSMs<br />
+--FelonyStatemachine: State machine for Running felony records<br />
 
 __TESTING:__ <br />
 I am using pytest and pytest-cov in testing this library, especially the
 following command:<br />
 pytest --cov=src --cov-report term-missing<br />
+
+__DOCUMENTATION:__<br />
+The documentation in the docs file includes UML diagrams for the data<br /> 
+structures as well as the FSMs.

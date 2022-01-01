@@ -8,6 +8,8 @@ inner lists holding crimes of the same class in order.
 '''
 import typing
 import uuid
+import copy
+
 from .charge import Charge
 from .crime import Crime
 import datetime
@@ -91,7 +93,8 @@ class ConvictionDate:
         :returns: Highest charge in this data structure
         :rtype: list (of Charges)
         '''
-        reversed = copy(self.convictions).reverse()
-        for conlist in reversed:
+        myconvictions = copy.deepcopy(self.convictions)
+        myconvictions.reverse()
+        for conlist in myconvictions:
             if conlist != []:
                 return conlist 

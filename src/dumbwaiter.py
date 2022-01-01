@@ -17,9 +17,9 @@ class Dumbwaiter:
     ____________________________________________________________________
     :attr habcons: a list of habitual felony convictions
     :attr habeligible: boolean of whether eligible for hab felon status
-    :attr dateeligible: date when eligible (None by default)
+    :attr date_eligible: date when eligible (None by default)
     :attr birthdate: the defendant's birthdate (needed in calculations)
-    :attr has_run: boolean -- T if this dumbwaiter has run through FSM
+    :attr has_run: boolean -- T iff dumbwaiter has run through FSM
 
     METHODS:
     ____________________________________________________________________
@@ -32,7 +32,7 @@ class Dumbwaiter:
     '''
     def __init__(self, birthdate: object):
         self.habcons = []
-        self.set_hab_eligible(False)
+        self.set_habeligible(False)
         self.date_eligible = None
         self.set_birthdate(birthdate)
         self.has_run = False  # when run, set True
@@ -104,7 +104,7 @@ requires a datetime date as a parameter.")
         :param dt: datetime.date obj to determine eligibility
         '''
         if type(dt) == date:
-            self.date_eligible = conviction_date
+            self.date_eligible = dt
         else:
             raise ValueError("The method set_date_eligible() in Dumbwaiter \
 requires a datetime.date input as a parameter.")
@@ -116,7 +116,7 @@ requires a datetime.date input as a parameter.")
         ____________________________________________________________________
         :param dt: datetime.date of offense to determine whether eligible
         '''
-        if self.date_eligible != None and offense_date > self.date_eligible:
+        if self.date_eligible != None and offense_date >= self.date_eligible:
             return True
         else:
             return False
