@@ -3,7 +3,10 @@ file    dumbwaiter.py
 author  Keith Helsabeck
 
 This is the module dumbwaiter for serving as a context
-object in writing state machines.
+object in writing state machines. As the habitual felon
+FSM runs, it should set certain values in this context 
+object (ie: birthdate of D, date_eligible, habeligible,
+habcons, has_run).
 '''
 import typing
 from datetime import date
@@ -11,11 +14,12 @@ from datetime import date
 class Dumbwaiter:
     '''
     Dumbwaiter is a context object for the HabitualMachine to pass
-    around between its state objects.
+    around between its state objects. HabitualMachine sets/checks
+    certain attributes in Dumbwaiter.
 
     ATTRIBUTES:
     ____________________________________________________________________
-    :attr habcons: a list of habitual felony convictions
+    :attr habcons: list of habitual felony convictions (from fsm/client)
     :attr habeligible: boolean of whether eligible for hab felon status
     :attr date_eligible: date when eligible (None by default)
     :attr birthdate: the defendant's birthdate (needed in calculations)
@@ -38,7 +42,8 @@ class Dumbwaiter:
         self.has_run = False  # when run, set True
 
     def set_birthdate(self, bd: object):
-        '''This should set the birthdate value IFF bd is a valid datetime 
+        '''
+        This should set the birthdate value IFF bd is a valid datetime 
         date object.
         
         PARAMETERS:
@@ -52,12 +57,12 @@ class Dumbwaiter:
 habitual felon analysis. Must be datetime.date-type.")
 
     def set_habeligible(self, eligible: bool):
-        '''This should set hab_eligible if the input value is a boolean
+        '''
+        This should set hab_eligible if the input value is a boolean
         
         PARAMETERS:
         ____________________________________________________________________
         :param bd: validates the birthdate's type
-
         '''
         if type(eligible) == bool:
             self.habeligible = eligible
@@ -81,7 +86,8 @@ requires a datetime date as a parameter.")
 
     @property
     def eighteenth_birthdate(self) -> object:
-        '''This uses the birthdate attr and returns the 18th birthdate.
+        '''
+        This uses the birthdate attr and returns the 18th birthdate.
         
          RETURN:
         ______________________________________________________________
@@ -97,7 +103,9 @@ requires a datetime date as a parameter.")
         return eighteenth
 
     def set_date_eligible(self, dt: object):
-        '''sets the date at which defendant is habitual eligible.
+        '''
+        Client code uses this to set the date at which defendant is habitual
+        status eligible.
 
         PARAMETERS:
         ____________________________________________________________________
@@ -110,7 +118,8 @@ requires a datetime date as a parameter.")
 requires a datetime.date input as a parameter.")
 
     def offensedate_iseligible(self, offense_date: object):
-        '''determines whether a conviction eligible for habitual status.
+        '''
+        determines whether a conviction eligible for habitual status.
         
         PARAMETERS:
         ____________________________________________________________________
