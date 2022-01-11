@@ -7,7 +7,7 @@ This calculates whether a defendant is eligible for habitual felon
 status in NC (see also UML in docs).
 
 Habitual Felony in NC:
-Habitual status is an OPTIONAL status in NC sentencing and can allow a 
+Habitual status is an OPTIONAL status in NC sentencing and can allow a
 prosecutor and judge to raise the sentence of a felony crime to a 
 sentence corresponding with a felony offense four classes higher 
 (up to C at maximum) than the actual crime. 
@@ -18,9 +18,10 @@ and convictions for eligible felonies. In each case the offense date
 for crime n+1 must occur after the conviction date of crime n.
 (2) Only one of crime can count if the Defendant was under 18.
 '''
-from .collections import Charge_Collection
-from .dumwaiter import Dumbwaiter
 from itertools import chain
+
+from .collections import Charge_Collection
+from .dumbwaiter import Dumbwaiter
 
 # #------- Base State:------------------
 class State:
@@ -70,10 +71,12 @@ class State:
         :return: True if the c is qualified for hab felony
         :rtype: bool
         '''
-        if not c.convicted or \ 
-            c.crime.valid_classes[c.crime.crimeclass] < 5 or\
-            "14-7.31" in c.crime.statuts or\
-            "14-33.2" in c.crime.statuts:
+        if not c.convicted or \
+            "Infraction" in c.crime.crimeclass or \
+            "Misdemeanor" in c.crime.crimeclass or \
+            "14-7.28" in c.crime.statute or \
+            "14-7.41" in c.crime.statute or \
+            "14-33.2" in c.crime.statute:
             return False
         return True
 
@@ -102,11 +105,11 @@ class StartState(State):
         '''
         for condate in colx.cons_bydate:
             # get list of felonies from a given date:
-            felonylist = chain.from_iterable(condate.convictions[5:])
+            felonylist = list(chain.from_iterable(condate.convictions[5:]))
             for f in felonylist:
                 if self.is_qualified(f):
                     dumbwaiter.habcons.append(f)
-                    return StrikeOne().on_event(colx, dumbwaiter, index)
+                    return StrikeOne().on_event(colx, dumbwaiter, index + 1)
             else: # no qualified felony found for THIS date
                 index += 1
         return FinishedState().on_event(colx, dumbwaiter, index)
@@ -143,14 +146,15 @@ class StrikeOne(State):
         :return: the next state's on_event() method (State object)
         :rtype: State
         '''
-        for colx.cons_bydate in range(index, len(colx.cons_bydate)):
+        for condate in colx.cons_bydate[index:]:
             # get list of felonies from a given date:
-            conlists = colx.cons_bydate[index].convictions[5:]
-            felonylist = chain.from_iterable(conlists)
+            conlists = condate.convictions[5:]
+            felonylist = list(chain.from_iterable(conlists))
             for f in felonylist:
-                if self.is_qualified(f):
+                if self.is_qualified(f)\
+                    and dumbwaiter.over18_on_date(f.offense_date):
                     dumbwaiter.habcons.append(f)
-                    return StrikeTwo().on_event(colx, dumbwaiter, index)
+                    return StrikeTwo().on_event(colx, dumbwaiter, index + 1)
             else: # no qualified felony found for THIS date
                 index += 1
         return FinishedState().on_event(colx, dumbwaiter, index)
@@ -187,14 +191,13 @@ class StrikeTwo(State):
         :return: the next state's on_event() method (State object)
         :rtype: State
         '''
-        for colx.cons_bydate in range(index, len(colx.cons_bydate)):
+        for condate in colx.cons_bydate[index:]:
             # get list of felonies from a given date:
-            conlists = colx.cons_bydate[index].convictions[5:]
-            felonylist = chain.from_iterable(conlists)
-
+            conlists = condate.convictions[5:]
+            felonylist = list(chain.from_iterable(conlists))
             for f in felonylist:
                 if self.is_qualified(f) and \
-                    dumbwaiter.offensedate_iseligible(f.offense_date):
+                    dumbwaiter.over18_on_date(f.offense_date):
                     dumbwaiter.habcons.append(f)
                     return StrikeThree().on_event(colx, dumbwaiter, index)
             else: # no qualified felony found for THIS date
@@ -230,7 +233,7 @@ class StrikeThree(State):
         dispo = colx.cons_bydate[index].disposition_date
         dumbwaiter.set_date_eligible(dispo)
 
-        return FinishedState().on_event(convictions, dumbwaiter)
+        return FinishedState().on_event(colx, dumbwaiter, index)
 
 class FinishedState(State):
     '''
@@ -289,14 +292,24 @@ class HabitualMachine:
     def __init__(self, colx: object, bd: object):
         self.state = StartState() 
         dumbwaiter = Dumbwaiter(bd)
-        self.state.on_event(convictions, dumbwaiter, 0)
-        self.hab_eligible = self.state.dumbwaiter.hab_eligible
+        self.state = self.state.on_event(colx, dumbwaiter, 0)
+        self.habeligible = self.state.dumbwaiter.habeligible
         self.date_eligible = self.state.dumbwaiter.date_eligible
 
     def date_iseligible(self, offense_date: object):
         '''
         After running a defendant's record, this takes a subsequent 
-        conviction/crime's offense date and returns whether it is eligible 
-        for habitual status.'''
+        conviction/crime's offense date and returns whether it is 
+        eligible for habitual status.
+
+        PARAMETERS:
+        ________________________________________________________________
+        :param offense_date: date of offense to test
+
+        RETURN:
+        ________________________________________________________________
+        :return: True if the D is eligible as of the tested offense_date
+        :rtype: bool
+        '''
         dw = self.state.dumbwaiter
         return dw.offensedate_iseligible(offense_date)

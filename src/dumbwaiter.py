@@ -89,11 +89,10 @@ requires a datetime date as a parameter.")
         '''
         This uses the birthdate attr and returns the 18th birthdate.
         
-         RETURN:
+        RETURN:
         ______________________________________________________________
         :returns: 18th birthdate (of defendant)
         :rtype: datetime.date
-
         '''
         eighteenth = date(
             self.birthdate.year + 18, 

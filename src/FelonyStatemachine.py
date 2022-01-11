@@ -302,7 +302,6 @@ class Felony_RecordMachine:
     METHODS:
     ____________________________________________________________________
     :method on_event: takes colx and runs it through FSM to --> pts/lev.
-
     '''
     def __init__(self):
         self.state = StartState() # starting state set
