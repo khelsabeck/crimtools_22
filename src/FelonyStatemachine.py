@@ -128,8 +128,10 @@ class StartState(State):
     '''
     Start of FSM for running felony record.
 
-    If there are no prior convictions, return FinishedState 
-    If there are priors, ret ScreeningState (ditches ineligibles)
+    TRANSITIONS:
+    ____________________________________________________________________
+    If there are no prior convictions, transition to FinishedState 
+    If there are priors, transition to HubState 
 
     ATTRIBUTES:
     ____________________________________________________________________
@@ -167,6 +169,8 @@ class HubState(State):
     This is the hub for choosing what to do with the next
     convictiondate.
 
+    TRANSITIONS:
+    ____________________________________________________________________
     If the conviction at the convictiondate is M or Inf -> M_State 
     If the conviction at the convictiondate is F -> F_State 
 
@@ -204,6 +208,8 @@ class M_State(State):
     '''
     This is the M_State for handling non-felony cases.
 
+    TRANSITIONS:
+    ____________________________________________________________________
     If the conviction is eligible, index++, pts++ -> HubState 
     If the conviction is not, index++ -> HubState
 
@@ -251,16 +257,49 @@ class M_State(State):
         return False
 
 class F_State(State):
-    '''An eligible misdemeanor (Class 1 or A1) is worth one point. Multiple 
-    misdemeanors on the same conviction date are capped at 1 point per day. 
-    This state class should add a point to points and return to HubState.'''
+    '''
+    This is the State where a felony conviction has been found.
+
+    TRANSITIONS:
+    ____________________________________________________________________
+    If the conviction is eligible, index++, pts++ -> HubState 
+    If the conviction is not, index++ -> HubState
+
+    ATTRIBUTES:
+    ____________________________________________________________________
+    :attr pts: num of points for felony records (starting at 0)
+    :attr index: current index (which convictiondate we are analyzing)
+    :attr level: current record level (starting at 1)
+
+    METHODS:
+    ____________________________________________________________________
+    :method on_event: takes charge_collection & pts -> State.on_event()
+    :method repr: returns representation of this state's class name
+    :method str: returns representation of this state's class name
+    '''
     def on_event(self, colx: object, pts: int, index: int):
         high_class = colx.cons_bydate[index].highest()[0].crime.crimeclass
         pts += FelonyPointChart.pointvals[high_class]
         return HubState().on_event(colx, pts, index + 1)
 
 class FinishedState(State):
-    '''This is the end of counting up the felonies'''
+    '''
+    This is final state after counting all felony points
+    
+    ATTRIBUTES:
+    ____________________________________________________________________
+    :attr pts: num of points for felony records (starting at 0)
+    :attr index: current index (which convictiondate we are analyzing)
+    :attr level: current record level (starting at 1)
+
+    METHODS:
+    ____________________________________________________________________
+    :method on_event: takes charge_collection & pts -> State.on_event()
+    :method leveler: takes points and returns level
+    :method repr: returns representation of this state's class name
+    :method str: returns representation of this state's class name
+
+    '''
     def on_event(self, colx: object, pts: int, index: int):
         self.level = self.leveler(pts)
         self.colx = colx

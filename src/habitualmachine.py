@@ -75,7 +75,7 @@ class State:
             "Infraction" in c.crime.crimeclass or \
             "Misdemeanor" in c.crime.crimeclass or \
             "14-7.28" in c.crime.statute or \
-            "14-7.41" in c.crime.statute or \
+            "14-7.36" in c.crime.statute or \
             "14-33.2" in c.crime.statute:
             return False
         return True
