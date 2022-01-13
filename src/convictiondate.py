@@ -22,7 +22,7 @@ class ConvictionDate:
     ATTRIBUTES:
     ____________________________________________________________________
     :attr disposition_date: (datetime.date)--date for all these charges
-    :attr convictions: a list containing the convictions
+    :attr convictions: a 2-d list of convictions (grouped by level)
 
     METHODS:
     ____________________________________________________________________
@@ -98,3 +98,5 @@ class ConvictionDate:
         for conlist in myconvictions:
             if conlist != []:
                 return conlist 
+
+
