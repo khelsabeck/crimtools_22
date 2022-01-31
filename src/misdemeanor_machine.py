@@ -11,6 +11,7 @@ Midemeanor Record in NC:
 over 4 convictions (F or M on seperate dates) -> Misdemeanor Level 3
 '''
 from .collections import Charge_Collection
+from .charge import Charge
 
 class State:
     '''
@@ -109,6 +110,10 @@ class StartState(State):
         :param pts: num of misdemeanor record points
         :param index: index of convictiondate in colx.cons_bydate
         '''
+        self.pts = pts
+        self.index = index
+        self.colx = colx
+
         colx.groupby_convictiondate()
         return LevelOne().on_event(colx, pts, index)
 
@@ -145,15 +150,21 @@ class LevelOne(State):
         :param pts: num of misdemeanor record points
         :param index: index of convictiondate in colx.cons_bydate
         '''
-        if type(colx.cons_bydate) == list \
-            and len(colx.cons_bydate) == 0:
-            return FinishedState().on_event(colx, pts, index)
-        elif type(colx.cons_bydate) == list \
-            and len(colx.cons_bydate) >= 1: 
-            c = colx.cons_bydate[index].highest()[0]
-            if self.is_qualified(c):
-                return LevelTwo().on_event(colx, pts + 1, index + 1)
-            return self.on_event(colx, pts, index + 1)
+        self.pts = pts
+        self.index = index
+        self.colx = colx
+
+        if type(colx.cons_bydate) == list:
+            if len(colx.cons_bydate) == 0:
+                return FinishedState().on_event(colx, pts, index)
+            elif len(colx.cons_bydate) >= 1: 
+                c = colx.cons_bydate[index].highest()[0]
+                if self.is_qualified(c):
+                    return LevelTwo().on_event(colx, pts + 1, index + 1)
+                else:   # keep checking disposition dates for qualified
+                    return self.on_event(colx, pts, index + 1)
+        else:
+            return FinishedState().on_event(colx, pts, index + 1)
 
 class LevelTwo(State):
     '''
@@ -189,19 +200,25 @@ class LevelTwo(State):
         :param index: index of convictiondate in colx.cons_bydate
         '''
         self.level = 2
-        if type(colx.cons_bydate) == list \
-            and len(colx.cons_bydate) == 0:
+        self.pts = pts
+        self.index = index
+        self.colx = colx
+
+        if type(colx.cons_bydate) != list or len(colx.cons_bydate) == 0:
+            self.error = True
             return FinishedState().on_event(colx, pts, index)
-        elif type(colx.cons_bydate) == list and \
-            len(colx.cons_bydate) > 1 and \
-            self.pts < 5: 
+
+        if len(colx.cons_bydate) == 1:
+            return FinishedState().on_event(colx, pts, index)
+        elif len(colx.cons_bydate) >= 1 and self.pts < 5: 
             c = colx.cons_bydate[index].highest()[0]
             if self.is_qualified(c):
                 return self.on_event(colx, pts + 1, index + 1)
             return self.on_event(colx, 0, index + 1)
-        elif type(colx.cons_bydate) == list and \
-            len(colx.cons_bydate) > 1 and \
-            self.pts >= 5: 
+        elif len(colx.cons_bydate) > 1 and self.pts >= 5: 
+            return FinishedState().on_event(colx, pts, index)
+        else:
+            self.error = True
             return FinishedState().on_event(colx, pts, index)
 
 class LevelThree(State):
@@ -236,6 +253,10 @@ class LevelThree(State):
         :param index: index of convictiondate in colx.cons_bydate
         '''
         self.level = 3
+        self.pts = pts
+        self.index = index
+        self.colx = colx
+
         if type(colx.cons_bydate) == list \
             and len(colx.cons_bydate) == 0:
             return FinishedState().on_event(colx, pts, index)
@@ -262,7 +283,7 @@ class FinishedState(State):
     '''
     def on_event(self, colx: object, pts: int, index: int) -> object: 
         '''
-        Determines next transition (Finished)
+        Determines next transition (Finished returns self)
 
         PARAMETERS:
         ________________________________________________________________
@@ -270,9 +291,10 @@ class FinishedState(State):
         :param pts: num of misdemeanor record points
         :param index: index of convictiondate in colx.cons_bydate
         '''
-        if type(colx.cons_bydate) == list \
-            and len(colx.cons_bydate) == 0:
-            return self
+        self.pts = pts
+        self.index = index
+        self.colx = colx
+        return self
 
 # --------- The State Machine:-----------------
 class MisdemeanorRecordMachine:
@@ -281,7 +303,7 @@ class MisdemeanorRecordMachine:
 
     USE:
     ____________________________________________________________________
-    Pass a collection instance for a defendant to the on_event() method.
+    Pass a collection instance for a defendant when initializing this.
     It will calculate the points and level of your defendant. Once the 
     FSM has run, the level attr of this machine will be the misd level.
 
@@ -297,3 +319,7 @@ class MisdemeanorRecordMachine:
     @property
     def level(self):
         return self.state.level
+
+    @property
+    def points(self):
+        return self.state.pts
